@@ -41,6 +41,42 @@
         <p class="text-gray-500">No hay préstamos registrados.</p>
       </div>
     </main>
+    
+    <!-- Modal Ver Préstamo -->
+    <div id="view-loan-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+      <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg m-4">
+        <h2 class="text-2xl font-bold mb-4">Ver Préstamo</h2>
+        <form id="view-loan-form" class="space-y-4">
+          <input type="hidden" id="view-loan-id">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label for="view-cedula" class="block text-sm font-medium text-gray-700">Cédula</label>
+              <input type="text" id="view-cedula" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100" disabled>
+            </div>
+            <div>
+              <label for="view-nombreApellido" class="block text-sm font-medium text-gray-700">Nombre y Apellido</label>
+              <input type="text" id="view-nombreApellido" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100" disabled>
+            </div>
+          </div>
+          <div>
+            <label for="view-capital" class="block text-sm font-medium text-gray-700">Capital (Gs.)</label>
+            <input type="text" id="view-capital" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100" disabled>
+          </div>
+          <div>
+            <label for="view-estado" class="block text-sm font-medium text-gray-700">Estado</label>
+            <select id="view-estado" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+              <option value="ACTIVO">Activo</option>
+              <option value="CANCELADO">Cancelado</option>
+            </select>
+          </div>
+          <div class="flex justify-end space-x-4 pt-4">
+            <button type="button" id="cancel-view-loan-btn" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400">Cancelar</button>
+            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Guardar Cambios</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>

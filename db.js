@@ -31,15 +31,6 @@ function initDB() {
         prestamosStore.createIndex('clienteCedula', 'clienteCedula', { unique: false });
       }
       
-      // --- Almacén de Pagos (para pagos individuales) ---
-      if (!db.objectStoreNames.contains('pagos')) {
-        const pagosStore = db.createObjectStore('pagos', { keyPath: 'id', autoIncrement: true });
-        if (!pagosStore.indexNames.contains('prestamoId')) {
-          pagosStore.createIndex('prestamoId', 'prestamoId', { unique: false });
-          console.log('Index "prestamoId" created on "pagos" store');
-        }
-      }
-
       // --- Almacén de Cuotas (Plan de Pagos) ---
       if (!db.objectStoreNames.contains('cuotas')) {
         const cuotasStore = db.createObjectStore('cuotas', { keyPath: 'id', autoIncrement: true });
@@ -142,6 +133,46 @@ function getPrestamoById(id) {
     request.onerror = event => reject('Error fetching prestamo by id: ' + event.target.error);
   });
 }
+
+function updatePrestamo(prestamo) {
+  return new Promise((resolve, reject) => {
+    if (!db) return reject('Database not initialized');
+    const transaction = db.transaction(['prestamos'], 'readwrite');
+    const store = transaction.objectStore('prestamos');
+    const request = store.put(prestamo);
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = event => reject('Error updating prestamo: ' + event.target.error);
+  });
+}
+
+function deletePrestamo(prestamoId) {
+    return new Promise((resolve, reject) => {
+        if (!db) return reject('Database not initialized');
+        const transaction = db.transaction(['prestamos', 'cuotas'], 'readwrite');
+        const prestamosStore = transaction.objectStore('prestamos');
+        const cuotasStore = transaction.objectStore('cuotas');
+        
+        const deletePrestamoRequest = prestamosStore.delete(prestamoId);
+        deletePrestamoRequest.onerror = event => reject('Error deleting prestamo: ' + event.target.error);
+
+        const cuotasIndex = cuotasStore.index('prestamoId');
+        const cuotasRequest = cuotasIndex.openCursor(IDBKeyRange.only(prestamoId));
+        
+        cuotasRequest.onsuccess = event => {
+            const cursor = event.target.result;
+            if (cursor) {
+                cursor.delete();
+                cursor.continue();
+            }
+        };
+        cuotasRequest.onerror = event => reject('Error deleting cuotas: ' + event.target.error);
+
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = event => reject('Transaction error: ' + event.target.error);
+    });
+}
+
 
 /**
  * Guarda una nueva cuota en la base de datos.
