@@ -97,6 +97,8 @@ function displayCuotas(cuotas) {
 }
 
 function setupEventListeners() {
+    document.getElementById('generar-pdf').addEventListener('click', generateFullPDF);
+
     const tableBody = document.getElementById('cuotas-table-body');
     tableBody.addEventListener('click', (event) => {
         if (event.target.classList.contains('pay-cuota-btn')) {
@@ -168,6 +170,47 @@ async function handlePaymentSubmit(event, generatePdf = false) {
         console.error('Error al registrar el pago:', error);
         alert('Hubo un error al registrar el pago.');
     }
+}
+
+async function generateFullPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    const params = new URLSearchParams(window.location.search);
+    const prestamoId = parseInt(params.get('id'), 10);
+    const prestamo = await getPrestamoById(prestamoId);
+    const cliente = await getClienteByCedula(prestamo.clienteCedula);
+    const cuotas = await getCuotasByPrestamoId(prestamoId);
+
+    doc.setFontSize(20);
+    doc.text("Plan de Pago", 105, 20, null, null, "center");
+
+    doc.setFontSize(12);
+    doc.text(`Cliente: ${cliente.nombreApellido}`, 20, 35);
+    doc.text(`Monto del Préstamo: Gs. ${prestamo.capital.toLocaleString('es-PY')}`, 20, 42);
+    doc.text(`Cuotas: ${prestamo.cantidadCuotas} de Gs. ${prestamo.montoCuota.toLocaleString('es-PY')}`, 20, 49);
+
+    let y = 60;
+    doc.setFontSize(10);
+    doc.text("N° Cuota", 20, y);
+    doc.text("Vencimiento", 50, y);
+    doc.text("Fecha de Pago", 80, y);
+    doc.text("Monto", 110, y);
+    doc.text("Monto Pagado", 140, y);
+    doc.text("Estado", 170, y);
+    y += 7;
+
+    cuotas.forEach(cuota => {
+        doc.text(cuota.numeroCuota.toString(), 20, y);
+        doc.text(new Date(cuota.fechaVencimiento + 'T00:00:00').toLocaleDateString('es-PY'), 50, y);
+        doc.text(cuota.fechaPago ? new Date(cuota.fechaPago + 'T00:00:00').toLocaleDateString('es-PY') : '-', 80, y);
+        doc.text(`Gs. ${cuota.montoCuota.toLocaleString('es-PY')}`, 110, y);
+        doc.text(cuota.montoPagado ? `Gs. ${cuota.montoPagado.toLocaleString('es-PY')}` : '-', 140, y);
+        doc.text(cuota.estado, 170, y);
+        y += 7;
+    });
+
+    doc.save('plan_pago.pdf');
 }
 
 async function generatePDFReceipt(prestamoId) {
