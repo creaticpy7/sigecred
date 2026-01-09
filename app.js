@@ -201,33 +201,45 @@ function setupEventListeners() {
     cantidadCuotasInput.addEventListener('input', calculateInterest);
     montoCuotaInput.addEventListener('input', calculateInterest);
 
+    const cedulaInput = document.getElementById('cedula');
+    cedulaInput.addEventListener('blur', async () => {
+        const cedula = cedulaInput.value;
+        if (cedula) {
+            const cliente = await getClienteByCedula(cedula);
+            if (cliente) {
+                document.getElementById('nombres').value = cliente.nombres;
+                document.getElementById('apellidos').value = cliente.apellidos;
+            }
+        }
+    });
+
     loanForm.addEventListener('submit', async (event) => {
       event.preventDefault();
       const formData = new FormData(loanForm);
       const cedula = formData.get('cedula');
 
-      // --- CRITICAL FIX: Prevent client data overwriting ---
-      // 1. Check if client already exists
+      const nombres = formData.get('nombres');
+      const apellidos = formData.get('apellidos');
+      
       const existingClient = await getClienteByCedula(cedula);
 
-      // 2. If client does not exist, save a new basic client record.
-      if (!existingClient) {
+      if (existingClient) {
+        // Update existing client
+        existingClient.nombres = nombres;
+        existingClient.apellidos = apellidos;
+        existingClient.nombreApellido = `${nombres} ${apellidos}`;
+        await saveCliente(existingClient);
+      } else {
+        // Create new client
         const newClient = {
           cedula: cedula,
-          nombreApellido: formData.get('nombreApellido'),
-          nombres: '', // Provide empty defaults for other fields
-          apellidos: '',
-          direccion: '',
-          barrio: '',
-          ciudad: '',
-          telefono1: '',
-          telefono2: '',
-          refNombre: '',
-          refTelefono: '',
+          nombres: nombres,
+          apellidos: apellidos,
+          nombreApellido: `${nombres} ${apellidos}`,
         };
         await saveCliente(newClient);
+        alert('NUEVO CLIENTE REGISTRADO');
       }
-      // If client exists, do nothing with the client data to avoid overwriting.
 
       // Recalcular el interés para asegurar que se guarda el valor numérico
       const capital = unformatNumber(formData.get('capital')) || 0;
