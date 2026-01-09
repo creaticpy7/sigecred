@@ -175,7 +175,7 @@ function setupEventListeners() {
     clientForm.addEventListener('submit', async (event) => {
       event.preventDefault();
       const formData = new FormData(clientForm);
-
+      
       const cliente = {
         cedula: formData.get('cedula'),
         nombres: formData.get('nombres'),
