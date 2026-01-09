@@ -41,18 +41,74 @@ async function loadAndDisplayLoans() {
         <p class="text-gray-600">Capital: <span class="font-medium">Gs. ${prestamo.capital.toLocaleString('es-PY')}</span></p>
         <div class="mt-4 flex justify-end space-x-2">
           <a href="plan_pago.html?id=${prestamo.id}" class="px-3 py-1 bg-green-500 text-white rounded-md text-sm hover:bg-green-600">Cobrar</a>
-          <button class="px-3 py-1 bg-yellow-500 text-white rounded-md text-sm hover:bg-yellow-600">Modificar</button>
-          <button class="px-3 py-1 bg-red-500 text-white rounded-md text-sm hover:bg-red-600">Eliminar</button>
-          <button class="px-3 py-1 bg-gray-500 text-white rounded-md text-sm hover:bg-gray-600">Cancelar</button>
+          <button data-id="${prestamo.id}" class="view-btn px-3 py-1 bg-yellow-500 text-white rounded-md text-sm hover:bg-yellow-600">Ver</button>
+          <button data-id="${prestamo.id}" class="delete-btn px-3 py-1 bg-red-500 text-white rounded-md text-sm hover:bg-red-600">Eliminar</button>
         </div>
       `;
       loansListDiv.appendChild(card);
     }
+    addEventListenersToButtons();
   };
   getAllRequest.onerror = event => {
     console.error('Error al leer los préstamos:', event.target.error);
     loansListDiv.innerHTML = '<p class="text-red-500">Error al cargar la lista de préstamos.</p>';
   };
+}
+
+function addEventListenersToButtons() {
+    const viewLoanModal = document.getElementById('view-loan-modal');
+    const viewLoanForm = document.getElementById('view-loan-form');
+    const cancelViewLoanBtn = document.getElementById('cancel-view-loan-btn');
+
+    document.querySelectorAll('.view-btn').forEach(button => {
+        button.addEventListener('click', async (e) => {
+            const loanId = parseInt(e.target.dataset.id);
+            const loan = await getPrestamoById(loanId);
+            const client = await getClienteByCedula(loan.clienteCedula);
+
+            document.getElementById('view-loan-id').value = loan.id;
+            document.getElementById('view-cedula').value = loan.clienteCedula;
+            document.getElementById('view-nombreApellido').value = client ? client.nombreApellido : '';
+            document.getElementById('view-capital').value = loan.capital.toLocaleString('es-PY');
+            document.getElementById('view-estado').value = loan.estado;
+
+            viewLoanModal.classList.remove('hidden');
+        });
+    });
+
+    document.querySelectorAll('.delete-btn').forEach(button => {
+        button.addEventListener('click', async (e) => {
+            const loanId = parseInt(e.target.dataset.id);
+            const cuotas = await getCuotasByPrestamoId(loanId);
+            const hasPayments = cuotas.some(cuota => cuota.estado === 'PAGADO' || cuota.montoPagado > 0);
+
+            if (hasPayments) {
+                alert('ERROR, PRÉSTAMO CON PAGOS VIGENTES.');
+            } else {
+                if (confirm('¿Está seguro de que desea eliminar este préstamo?')) {
+                    await deletePrestamo(loanId);
+                    loadAndDisplayLoans();
+                }
+            }
+        });
+    });
+
+    cancelViewLoanBtn.addEventListener('click', () => {
+        viewLoanModal.classList.add('hidden');
+    });
+
+    viewLoanForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const loanId = parseInt(document.getElementById('view-loan-id').value);
+        const newStatus = document.getElementById('view-estado').value;
+
+        const loan = await getPrestamoById(loanId);
+        loan.estado = newStatus;
+
+        await updatePrestamo(loan);
+        viewLoanModal.classList.add('hidden');
+        loadAndDisplayLoans(); // Refresh the list
+    });
 }
 
 function setupEventListeners() {
