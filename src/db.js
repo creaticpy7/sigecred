@@ -30,7 +30,7 @@ function initDB() {
       if (!prestamosStore.indexNames.contains('clienteCedula')) {
         prestamosStore.createIndex('clienteCedula', 'clienteCedula', { unique: false });
       }
-      
+
       // --- Almacén de Pagos (para pagos individuales) ---
       if (!db.objectStoreNames.contains('pagos')) {
         const pagosStore = db.createObjectStore('pagos', { keyPath: 'id', autoIncrement: true });
@@ -75,7 +75,7 @@ function saveCliente(cliente) {
       // Si el cliente existe, actualizamos sus datos. Si no, lo creamos.
       const dataToStore = existingClient ? { ...existingClient, ...cliente } : cliente;
       const putRequest = store.put(dataToStore);
-      
+
       putRequest.onsuccess = () => resolve(putRequest.result);
       putRequest.onerror = event => reject('Error saving client: ' + event.target.error);
     };
@@ -199,7 +199,7 @@ function updateCuotaPago(cuotaId, fechaPago, montoPagado) {
                 cuota.fechaPago = fechaPago;
                 cuota.montoPagado = montoPagado;
                 cuota.saldo = cuota.montoCuota - montoPagado;
-                
+
                 const updateRequest = store.put(cuota);
                 updateRequest.onsuccess = () => resolve(updateRequest.result);
                 updateRequest.onerror = event => reject('Error updating cuota: ' + event.target.error);

@@ -40,7 +40,7 @@
         </div>
       </div>
     </main>
-    
+
     <NewClientModal v-if="showClientModal" @close="showClientModal = false" @client-saved="fetchPrestamos" />
     <NewLoanModal v-if="showLoanModal" @close="showLoanModal = false" @loan-saved="fetchPrestamos" />
 

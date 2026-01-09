@@ -157,7 +157,7 @@ app.post('/api/prestamos', verifyToken, (req, res) => {
         break;
     }
   }
-  
+
   writeDB(db);
   res.status(201).json(newPrestamo);
 });

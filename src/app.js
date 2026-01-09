@@ -46,47 +46,16 @@ function unformatNumber(value) {
 }
 
 
-// --- API Helper Functions ---
-
-const API_URL = 'http://localhost:3000/api';
-
-function getToken() {
-  return localStorage.getItem('token');
-}
-
-async function fetchWithAuth(url, options = {}) {
-  const token = getToken();
-  const headers = {
-    'Content-Type': 'application/json',
-    ...options.headers,
-  };
-
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
-  const response = await fetch(url, { ...options, headers });
-
-  if (response.status === 401) {
-    // Token is invalid or expired, redirect to login
-    window.location.href = 'login.html';
-    throw new Error('Unauthorized');
-  }
-  
-  return response;
-}
-
-
 // --- Lógica del Dashboard ---
 
 document.addEventListener('DOMContentLoaded', () => {
-  if (!getToken()) {
-    window.location.href = 'login.html';
-    return;
-  }
-  setupEventListeners();
+  initDB().then(() => {
+    console.log('Base de datos inicializada.');
+    setupEventListeners();
+  }).catch(error => {
+    console.error('Error al inicializar la base de datos:', error);
+  });
 });
-
 
 // --- Lógica de Eventos y Formularios ---
 
@@ -171,47 +140,40 @@ function setupEventListeners() {
     });
   }
   
-  if (clientForm) {
-    clientForm.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      const formData = new FormData(clientForm);
-      
-      const cliente = {
-        cedula: formData.get('cedula'),
-        nombres: formData.get('nombres'),
-        apellidos: formData.get('apellidos'),
-        nombreApellido: `${formData.get('nombres')} ${formData.get('apellidos')}`,
-        direccion: formData.get('direccion'),
-        barrio: formData.get('barrio'),
-        ciudad: formData.get('ciudad'),
-        telefono1: formData.get('telefono1'),
-        telefono2: formData.get('telefono2'),
-        refNombre: formData.get('refNombre'),
-        refTelefono: formData.get('refTelefono'),
-      };
+  if (loanForm) {
+    // --- Lógica para guardar Nuevo Cliente ---
+    if(clientForm) {
+      clientForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const formData = new FormData(clientForm);
 
-      try {
-        const response = await fetchWithAuth(`${API_URL}/clientes`, {
-          method: 'POST',
-          body: JSON.stringify(cliente),
-        });
+        const cliente = {
+          cedula: formData.get('cedula'),
+          nombres: formData.get('nombres'),
+          apellidos: formData.get('apellidos'),
+          nombreApellido: `${formData.get('nombres')} ${formData.get('apellidos')}`, // Campo unificado
+          direccion: formData.get('direccion'),
+          barrio: formData.get('barrio'),
+          ciudad: formData.get('ciudad'),
+          telefono1: formData.get('telefono1'),
+          telefono2: formData.get('telefono2'),
+          refNombre: formData.get('refNombre'),
+          refTelefono: formData.get('refTelefono'),
+        };
 
-        if (response.ok) {
+        try {
+          await saveCliente(cliente);
           alert('CLIENTE AGREGADO');
           clientForm.reset();
           clientModal.classList.add('hidden');
-        } else {
-          const errorText = await response.text();
-          throw new Error(errorText);
+        } catch (error) {
+          console.error('Error al guardar el cliente:', error);
+          alert('Error al guardar el cliente. Verifique que la Cédula no esté duplicada.');
         }
-      } catch (error) {
-        console.error('Error al guardar el cliente:', error);
-        alert(`Error al guardar el cliente: ${error.message}`);
-      }
-    });
-  }
+      });
+    }
 
-  if (loanForm) {
+    // Calcular interés total dinámicamente y aplicar formato
     const capitalInput = document.getElementById('capital');
     const cantidadCuotasInput = document.getElementById('cantidadCuotas');
     const montoCuotaInput = document.getElementById('montoCuota');
@@ -244,71 +206,109 @@ function setupEventListeners() {
       const formData = new FormData(loanForm);
       const cedula = formData.get('cedula');
 
-      try {
-        // Step 1: Check if client exists, if not create a basic record.
-        const clientResponse = await fetchWithAuth(`${API_URL}/clientes/${cedula}`);
-        if (!clientResponse.ok) {
-          if (clientResponse.status === 404) {
-            const newClient = {
-              cedula: cedula,
-              nombreApellido: formData.get('nombreApellido'),
-              nombres: '',
-              apellidos: '',
-            };
-            const createClientResponse = await fetchWithAuth(`${API_URL}/clientes`, {
-                method: 'POST',
-                body: JSON.stringify(newClient)
-            });
-            if (!createClientResponse.ok) {
-                throw new Error('Failed to create new client');
-            }
-          } else {
-            throw new Error('Failed to verify client');
-          }
-        }
+      // --- CRITICAL FIX: Prevent client data overwriting ---
+      // 1. Check if client already exists
+      const existingClient = await getClienteByCedula(cedula);
 
-        // Step 2: Create the loan object
-        const capital = unformatNumber(formData.get('capital')) || 0;
-        const cantidadCuotas = parseInt(formData.get('cantidadCuotas')) || 0;
-        const montoCuota = unformatNumber(formData.get('montoCuota')) || 0;
-        let interesTotalNumerico = 0;
-        if (capital > 0 && cantidadCuotas > 0 && montoCuota > 0) {
-          const totalPagado = cantidadCuotas * montoCuota;
-          const interesGanado = totalPagado - capital;
-          interesTotalNumerico = parseFloat(((interesGanado / capital) * 100).toFixed(2));
-        }
-
-        const prestamo = {
-          clienteCedula: cedula,
-          capital: capital,
-          frecuenciaPago: formData.get('frecuenciaPago'),
-          cantidadCuotas: cantidadCuotas,
-          montoCuota: montoCuota,
-          interesTotal: interesTotalNumerico,
-          fechaDesembolso: formData.get('fechaDesembolso'),
-          fechaPrimerPago: formData.get('fechaPrimerPago'),
-          estado: formData.get('estado'),
+      // 2. If client does not exist, save a new basic client record.
+      if (!existingClient) {
+        const newClient = {
+          cedula: cedula,
+          nombreApellido: formData.get('nombreApellido'),
+          nombres: '', // Provide empty defaults for other fields
+          apellidos: '',
+          direccion: '',
+          barrio: '',
+          ciudad: '',
+          telefono1: '',
+          telefono2: '',
+          refNombre: '',
+          refTelefono: '',
         };
+        await saveCliente(newClient);
+      }
+      // If client exists, do nothing with the client data to avoid overwriting.
 
-        // Step 3: Save the loan
-        const prestamoResponse = await fetchWithAuth(`${API_URL}/prestamos`, {
-            method: 'POST',
-            body: JSON.stringify(prestamo)
-        });
+      // Recalcular el interés para asegurar que se guarda el valor numérico
+      const capital = unformatNumber(formData.get('capital')) || 0;
+      const cantidadCuotas = parseInt(formData.get('cantidadCuotas')) || 0;
+      const montoCuota = unformatNumber(formData.get('montoCuota')) || 0;
+      let interesTotalNumerico = 0;
+      if (capital > 0 && cantidadCuotas > 0 && montoCuota > 0) {
+        const totalPagado = cantidadCuotas * montoCuota;
+        const interesGanado = totalPagado - capital;
+        interesTotalNumerico = parseFloat(((interesGanado / capital) * 100).toFixed(2));
+      }
 
-        if (prestamoResponse.ok) {
-            alert('Préstamo grabado exitosamente.');
-            loanForm.reset();
-            loanModal.classList.add('hidden');
-        } else {
-            const errorText = await prestamoResponse.text();
-            throw new Error(errorText);
-        }
+      const prestamo = {
+        clienteCedula: cedula,
+        capital: capital,
+        frecuenciaPago: formData.get('frecuenciaPago'),
+        cantidadCuotas: cantidadCuotas,
+        montoCuota: montoCuota,
+        interesTotal: interesTotalNumerico, // Guardar solo el número
+        fechaDesembolso: formData.get('fechaDesembolso'),
+        fechaPrimerPago: formData.get('fechaPrimerPago'),
+        estado: formData.get('estado'),
+      };
+
+      try {
+        const prestamoId = await savePrestamo(prestamo);
+        console.log('Préstamo grabado exitosamente con ID:', prestamoId);
+
+        await generarYGuardarPlanDePago(prestamo, prestamoId);
+
+        loanForm.reset();
+        loanModal.classList.add('hidden');
+        console.log('Plan de pago generado y modal cerrado.');
 
       } catch (error) {
-        console.error('Error al grabar el préstamo:', error);
-        alert(`Error al grabar el préstamo: ${error.message}`);
+        console.error('Error durante el proceso de grabación del préstamo y plan de pago:', error);
       }
     });
+  }
+}
+
+/**
+ * Genera el plan de pagos para un préstamo y lo guarda en la base de datos.
+ * @param {object} prestamo - El objeto del préstamo.
+ * @param {number} prestamoId - El ID del préstamo recién guardado.
+ */
+async function generarYGuardarPlanDePago(prestamo, prestamoId) {
+  const { fechaPrimerPago, cantidadCuotas, frecuenciaPago, montoCuota } = prestamo;
+  let fechaActual = new Date(fechaPrimerPago + 'T00:00:00'); // Asegurar que se interpreta como fecha local
+
+  for (let i = 1; i <= cantidadCuotas; i++) {
+    const cuota = {
+      prestamoId: prestamoId,
+      numeroCuota: i,
+      montoCuota: montoCuota,
+      fechaVencimiento: fechaActual.toISOString().split('T')[0], // Guardar como YYYY-MM-DD
+      estado: 'PENDIENTE',
+      // Campos para el pago
+      fechaPago: null,
+      montoPagado: null,
+      saldo: montoCuota,
+    };
+
+    // Guardar la cuota en la base de datos
+    await saveCuota(cuota);
+    console.log(`Cuota ${i} guardada para el préstamo ${prestamoId}`);
+
+    // Calcular la fecha de la siguiente cuota
+    switch (frecuenciaPago) {
+      case 'D':
+        fechaActual.setDate(fechaActual.getDate() + 1);
+        break;
+      case 'S':
+        fechaActual.setDate(fechaActual.getDate() + 7);
+        break;
+      case 'Q':
+        fechaActual.setDate(fechaActual.getDate() + 15);
+        break;
+      case 'M':
+        fechaActual.setMonth(fechaActual.getMonth() + 1);
+        break;
+    }
   }
 }
