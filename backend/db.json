@@ -1,0 +1,271 @@
+{
+  "clientes": [
+    {
+      "id": 1767938740044,
+      "cedula": "123451767938739",
+      "nombres": "Test",
+      "apellidos": "User",
+      "nombreApellido": "Test User"
+    },
+    {
+      "id": 1767940553234,
+      "cedula": "123451767940553",
+      "nombres": "Test",
+      "apellidos": "User",
+      "nombreApellido": "Test User"
+    }
+  ],
+  "prestamos": [
+    {
+      "id": 1767938740228,
+      "clienteCedula": "123451767938739",
+      "capital": 1000000,
+      "frecuenciaPago": "D",
+      "cantidadCuotas": 10,
+      "montoCuota": 120000,
+      "fechaDesembolso": "2024-01-01",
+      "fechaPrimerPago": "2024-02-01",
+      "estado": "ACTIVO"
+    },
+    {
+      "id": 1767940553564,
+      "clienteCedula": "123451767940553",
+      "capital": 1000000,
+      "frecuenciaPago": "D",
+      "cantidadCuotas": 10,
+      "montoCuota": 120000,
+      "fechaDesembolso": "2024-01-01",
+      "fechaPrimerPago": "2024-02-01",
+      "estado": "ACTIVO"
+    }
+  ],
+  "users": [
+    {
+      "id": 1767938727125,
+      "username": "testuser",
+      "password": "$2b$10$T21QEAVfnODaj1N/EcnU1OBkvvEzM8DCMHb0OW2wdxtuSH3kJX4FK"
+    }
+  ],
+  "cuotas": [
+    {
+      "id": 1767938740229,
+      "prestamoId": 1767938740228,
+      "numeroCuota": 1,
+      "montoCuota": 120000,
+      "fechaVencimiento": "2024-02-01",
+      "estado": "PENDIENTE",
+      "fechaPago": null,
+      "montoPagado": null,
+      "saldo": 120000
+    },
+    {
+      "id": 1767938740230,
+      "prestamoId": 1767938740228,
+      "numeroCuota": 2,
+      "montoCuota": 120000,
+      "fechaVencimiento": "2024-02-02",
+      "estado": "PENDIENTE",
+      "fechaPago": null,
+      "montoPagado": null,
+      "saldo": 120000
+    },
+    {
+      "id": 1767938740231,
+      "prestamoId": 1767938740228,
+      "numeroCuota": 3,
+      "montoCuota": 120000,
+      "fechaVencimiento": "2024-02-03",
+      "estado": "PENDIENTE",
+      "fechaPago": null,
+      "montoPagado": null,
+      "saldo": 120000
+    },
+    {
+      "id": 1767938740232,
+      "prestamoId": 1767938740228,
+      "numeroCuota": 4,
+      "montoCuota": 120000,
+      "fechaVencimiento": "2024-02-04",
+      "estado": "PENDIENTE",
+      "fechaPago": null,
+      "montoPagado": null,
+      "saldo": 120000
+    },
+    {
+      "id": 1767938740233,
+      "prestamoId": 1767938740228,
+      "numeroCuota": 5,
+      "montoCuota": 120000,
+      "fechaVencimiento": "2024-02-05",
+      "estado": "PENDIENTE",
+      "fechaPago": null,
+      "montoPagado": null,
+      "saldo": 120000
+    },
+    {
+      "id": 1767938740234,
+      "prestamoId": 1767938740228,
+      "numeroCuota": 6,
+      "montoCuota": 120000,
+      "fechaVencimiento": "2024-02-06",
+      "estado": "PENDIENTE",
+      "fechaPago": null,
+      "montoPagado": null,
+      "saldo": 120000
+    },
+    {
+      "id": 1767938740235,
+      "prestamoId": 1767938740228,
+      "numeroCuota": 7,
+      "montoCuota": 120000,
+      "fechaVencimiento": "2024-02-07",
+      "estado": "PENDIENTE",
+      "fechaPago": null,
+      "montoPagado": null,
+      "saldo": 120000
+    },
+    {
+      "id": 1767938740236,
+      "prestamoId": 1767938740228,
+      "numeroCuota": 8,
+      "montoCuota": 120000,
+      "fechaVencimiento": "2024-02-08",
+      "estado": "PENDIENTE",
+      "fechaPago": null,
+      "montoPagado": null,
+      "saldo": 120000
+    },
+    {
+      "id": 1767938740237,
+      "prestamoId": 1767938740228,
+      "numeroCuota": 9,
+      "montoCuota": 120000,
+      "fechaVencimiento": "2024-02-09",
+      "estado": "PENDIENTE",
+      "fechaPago": null,
+      "montoPagado": null,
+      "saldo": 120000
+    },
+    {
+      "id": 1767938740238,
+      "prestamoId": 1767938740228,
+      "numeroCuota": 10,
+      "montoCuota": 120000,
+      "fechaVencimiento": "2024-02-10",
+      "estado": "PENDIENTE",
+      "fechaPago": null,
+      "montoPagado": null,
+      "saldo": 120000
+    },
+    {
+      "id": 1767940553565,
+      "prestamoId": 1767940553564,
+      "numeroCuota": 1,
+      "montoCuota": 120000,
+      "fechaVencimiento": "2024-02-01",
+      "estado": "PENDIENTE",
+      "fechaPago": null,
+      "montoPagado": null,
+      "saldo": 120000
+    },
+    {
+      "id": 1767940553566,
+      "prestamoId": 1767940553564,
+      "numeroCuota": 2,
+      "montoCuota": 120000,
+      "fechaVencimiento": "2024-02-02",
+      "estado": "PENDIENTE",
+      "fechaPago": null,
+      "montoPagado": null,
+      "saldo": 120000
+    },
+    {
+      "id": 1767940553567,
+      "prestamoId": 1767940553564,
+      "numeroCuota": 3,
+      "montoCuota": 120000,
+      "fechaVencimiento": "2024-02-03",
+      "estado": "PENDIENTE",
+      "fechaPago": null,
+      "montoPagado": null,
+      "saldo": 120000
+    },
+    {
+      "id": 1767940553568,
+      "prestamoId": 1767940553564,
+      "numeroCuota": 4,
+      "montoCuota": 120000,
+      "fechaVencimiento": "2024-02-04",
+      "estado": "PENDIENTE",
+      "fechaPago": null,
+      "montoPagado": null,
+      "saldo": 120000
+    },
+    {
+      "id": 1767940553569,
+      "prestamoId": 1767940553564,
+      "numeroCuota": 5,
+      "montoCuota": 120000,
+      "fechaVencimiento": "2024-02-05",
+      "estado": "PENDIENTE",
+      "fechaPago": null,
+      "montoPagado": null,
+      "saldo": 120000
+    },
+    {
+      "id": 1767940553570,
+      "prestamoId": 1767940553564,
+      "numeroCuota": 6,
+      "montoCuota": 120000,
+      "fechaVencimiento": "2024-02-06",
+      "estado": "PENDIENTE",
+      "fechaPago": null,
+      "montoPagado": null,
+      "saldo": 120000
+    },
+    {
+      "id": 1767940553571,
+      "prestamoId": 1767940553564,
+      "numeroCuota": 7,
+      "montoCuota": 120000,
+      "fechaVencimiento": "2024-02-07",
+      "estado": "PENDIENTE",
+      "fechaPago": null,
+      "montoPagado": null,
+      "saldo": 120000
+    },
+    {
+      "id": 1767940553572,
+      "prestamoId": 1767940553564,
+      "numeroCuota": 8,
+      "montoCuota": 120000,
+      "fechaVencimiento": "2024-02-08",
+      "estado": "PENDIENTE",
+      "fechaPago": null,
+      "montoPagado": null,
+      "saldo": 120000
+    },
+    {
+      "id": 1767940553573,
+      "prestamoId": 1767940553564,
+      "numeroCuota": 9,
+      "montoCuota": 120000,
+      "fechaVencimiento": "2024-02-09",
+      "estado": "PENDIENTE",
+      "fechaPago": null,
+      "montoPagado": null,
+      "saldo": 120000
+    },
+    {
+      "id": 1767940553574,
+      "prestamoId": 1767940553564,
+      "numeroCuota": 10,
+      "montoCuota": 120000,
+      "fechaVencimiento": "2024-02-10",
+      "estado": "PENDIENTE",
+      "fechaPago": null,
+      "montoPagado": null,
+      "saldo": 120000
+    }
+  ]
+}
