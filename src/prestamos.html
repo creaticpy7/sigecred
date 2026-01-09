@@ -36,6 +36,35 @@
     <!-- Main Content -->
     <main class="p-4">
       <h1 class="text-2xl font-bold mb-4">Lista de Préstamos</h1>
+
+      <!-- Search and Sort Controls -->
+      <div class="bg-white p-4 rounded-lg shadow-md mb-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <label for="search-cedula" class="block text-sm font-medium text-gray-700">Buscar por Cédula</label>
+            <input type="text" id="search-cedula" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+          </div>
+          <div>
+            <label for="search-nombre" class="block text-sm font-medium text-gray-700">Buscar por Nombre/Apellido</label>
+            <input type="text" id="search-nombre" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+          </div>
+          <div>
+            <label for="sort-by" class="block text-sm font-medium text-gray-700">Ordenar por</label>
+            <select id="sort-by" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+              <option value="nombreApellido">Nombre y Apellido</option>
+              <option value="frecuenciaPago">Frecuencia de Pago</option>
+            </select>
+          </div>
+          <div>
+            <label for="sort-order" class="block text-sm font-medium text-gray-700">Orden</label>
+            <select id="sort-order" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+              <option value="asc">Ascendente</option>
+              <option value="desc">Descendente</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
       <div id="loans-list" class="space-y-4">
         <!-- Los préstamos se insertarán aquí dinámicamente -->
         <p class="text-gray-500">No hay préstamos registrados.</p>

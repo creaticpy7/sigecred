@@ -3,7 +3,6 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('Base de datos inicializada para la página de préstamos.');
     loadAndDisplayLoans();
     setupEventListeners();
-    setupPaymentModalListeners();
   }).catch(error => {
     console.error('Error al inicializar la base de datos:', error);
   });
@@ -11,34 +10,75 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function loadAndDisplayLoans() {
   const loansListDiv = document.getElementById('loans-list');
+  const searchCedula = document.getElementById('search-cedula').value.toLowerCase();
+  const searchNombre = document.getElementById('search-nombre').value.toLowerCase();
+  const sortBy = document.getElementById('sort-by').value;
+  const sortOrder = document.getElementById('sort-order').value;
+
   if (!db) {
     loansListDiv.innerHTML = '<p class="text-red-500">Error: La base de datos no está inicializada.</p>';
     return;
   }
-  const transaction = db.transaction(['prestamos'], 'readonly');
-  const store = transaction.objectStore('prestamos');
-  const getAllRequest = store.getAll();
+  const transaction = db.transaction(['prestamos', 'clientes'], 'readonly');
+  const prestamosStore = transaction.objectStore('prestamos');
+  const clientesStore = transaction.objectStore('clientes');
+  const getAllPrestamos = prestamosStore.getAll();
 
-  getAllRequest.onsuccess = async () => {
-    const prestamos = getAllRequest.result;
-    if (prestamos.length === 0) {
-      loansListDiv.innerHTML = '<p class="text-gray-500">No hay préstamos registrados.</p>';
+  getAllPrestamos.onsuccess = async () => {
+    let prestamos = getAllPrestamos.result;
+    let enrichedPrestamos = [];
+
+    for (const prestamo of prestamos) {
+      const cliente = await getClienteByCedula(prestamo.clienteCedula);
+      if (cliente) {
+        prestamo.nombreApellido = cliente.nombreApellido;
+        enrichedPrestamos.push(prestamo);
+      }
+    }
+
+    // Filtering
+    if (searchCedula) {
+      enrichedPrestamos = enrichedPrestamos.filter(p => p.clienteCedula.toLowerCase().includes(searchCedula));
+    }
+    if (searchNombre) {
+      enrichedPrestamos = enrichedPrestamos.filter(p => p.nombreApellido.toLowerCase().includes(searchNombre));
+    }
+
+    // Sorting
+    enrichedPrestamos.sort((a, b) => {
+      let valA = a[sortBy];
+      let valB = b[sortBy];
+      if (typeof valA === 'string') valA = valA.toLowerCase();
+      if (typeof valB === 'string') valB = valB.toLowerCase();
+
+      if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+      if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    if (enrichedPrestamos.length === 0) {
+      loansListDiv.innerHTML = '<p class="text-gray-500">No hay préstamos que coincidan con la búsqueda.</p>';
       return;
     }
     loansListDiv.innerHTML = '';
 
-    for (const prestamo of prestamos) {
-      const cliente = await getClienteByCedula(prestamo.clienteCedula);
-      const nombreCliente = cliente ? cliente.nombreApellido : 'Cliente no encontrado';
+    for (const prestamo of enrichedPrestamos) {
+      const cuotas = await getCuotasByPrestamoId(prestamo.id);
+      const totalPagado = cuotas.reduce((acc, cuota) => acc + (cuota.montoPagado || 0), 0);
+      const saldo = (prestamo.capital * (1 + prestamo.interesTotal / 100)) - totalPagado;
+
       const card = document.createElement('div');
       card.className = 'bg-white p-4 rounded-lg shadow-md';
       const estadoClass = prestamo.estado === 'ACTIVO' ? 'text-green-600' : 'text-red-600';
       card.innerHTML = `
         <div class="flex justify-between items-center mb-2">
-          <h2 class="text-lg font-bold text-blue-700">${nombreCliente}</h2>
+          <h2 class="text-lg font-bold text-blue-700">${prestamo.nombreApellido}</h2>
           <span class="text-sm font-semibold ${estadoClass}">${prestamo.estado}</span>
         </div>
         <p class="text-gray-600">Capital: <span class="font-medium">Gs. ${prestamo.capital.toLocaleString('es-PY')}</span></p>
+        <p class="text-gray-600">Saldo: <span class="font-medium">Gs. ${saldo.toLocaleString('es-PY')}</span></p>
+        <p class="text-gray-600">Fecha Desembolso: <span class="font-medium">${prestamo.fechaDesembolso}</span></p>
+        <p class="text-gray-600">Frecuencia de Pago: <span class="font-medium">${prestamo.frecuenciaPago}</span></p>
         <div class="mt-4 flex justify-end space-x-2">
           <a href="plan_pago.html?id=${prestamo.id}" class="px-3 py-1 bg-green-500 text-white rounded-md text-sm hover:bg-green-600">Cobrar</a>
           <button data-id="${prestamo.id}" class="view-btn px-3 py-1 bg-yellow-500 text-white rounded-md text-sm hover:bg-yellow-600">Ver</button>
@@ -49,7 +89,7 @@ async function loadAndDisplayLoans() {
     }
     addEventListenersToButtons();
   };
-  getAllRequest.onerror = event => {
+  getAllPrestamos.onerror = event => {
     console.error('Error al leer los préstamos:', event.target.error);
     loansListDiv.innerHTML = '<p class="text-red-500">Error al cargar la lista de préstamos.</p>';
   };
@@ -112,6 +152,11 @@ function addEventListenersToButtons() {
 }
 
 function setupEventListeners() {
+  document.getElementById('search-cedula').addEventListener('input', loadAndDisplayLoans);
+  document.getElementById('search-nombre').addEventListener('input', loadAndDisplayLoans);
+  document.getElementById('sort-by').addEventListener('change', loadAndDisplayLoans);
+  document.getElementById('sort-order').addEventListener('change', loadAndDisplayLoans);
+
   const menuBtn = document.getElementById('menu-btn');
   const navMenu = document.getElementById('nav-menu');
   if (!menuBtn || !navMenu) return;
