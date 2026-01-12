@@ -87,6 +87,75 @@ function getClienteByCedula(cedula) {
   });
 }
 
+function getClienteById(id) {
+  return new Promise((resolve, reject) => {
+    if (!db) return reject('Database not initialized');
+    const transaction = db.transaction(['clientes'], 'readonly');
+    const store = transaction.objectStore('clientes');
+    const request = store.get(id);
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = event => reject('Error fetching client by id: ' + event.target.error);
+  });
+}
+
+function getPrestamosByClienteCedula(cedula) {
+  return new Promise((resolve, reject) => {
+    if (!db) return reject('Database not initialized');
+    const transaction = db.transaction(['prestamos'], 'readonly');
+    const store = transaction.objectStore('prestamos');
+    const index = store.index('clienteCedula');
+    const request = index.getAll(cedula);
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = event => reject('Error fetching prestamos by cliente cedula: ' + event.target.error);
+  });
+}
+
+function deleteCliente(clienteId) {
+    return new Promise((resolve, reject) => {
+        if (!db) return reject('Database not initialized');
+        const transaction = db.transaction(['clientes', 'prestamos', 'cuotas'], 'readwrite');
+        const clientesStore = transaction.objectStore('clientes');
+        const prestamosStore = transaction.objectStore('prestamos');
+        const cuotasStore = transaction.objectStore('cuotas');
+
+        const getClientRequest = clientesStore.get(clienteId);
+        getClientRequest.onsuccess = () => {
+            const client = getClientRequest.result;
+            if (!client) return resolve();
+
+            const deleteClientRequest = clientesStore.delete(clienteId);
+            deleteClientRequest.onerror = event => reject('Error deleting client: ' + event.target.error);
+
+            const prestamosIndex = prestamosStore.index('clienteCedula');
+            const prestamosRequest = prestamosIndex.openCursor(IDBKeyRange.only(client.cedula));
+            
+            prestamosRequest.onsuccess = event => {
+                const cursor = event.target.result;
+                if (cursor) {
+                    const prestamo = cursor.value;
+                    const cuotasIndex = cuotasStore.index('prestamoId');
+                    const cuotasRequest = cuotasIndex.openCursor(IDBKeyRange.only(prestamo.id));
+                    cuotasRequest.onsuccess = e => {
+                        const cuotaCursor = e.target.result;
+                        if(cuotaCursor){
+                            cuotaCursor.delete();
+                            cuotaCursor.continue();
+                        }
+                    };
+                    cursor.delete();
+                    cursor.continue();
+                }
+            };
+        };
+        
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = event => reject('Transaction error: ' + event.target.error);
+    });
+}
+
+
 function savePrestamo(prestamo) {
   return new Promise((resolve, reject) => {
     if (!db) return reject('Database not initialized');
