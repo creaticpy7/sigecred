@@ -9,8 +9,15 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function loadAndDisplayLoans() {
+  const params = new URLSearchParams(window.location.search);
+  const cedulaFilter = params.get('cedula');
+
   const loansListDiv = document.getElementById('loans-list');
-  const searchCedula = document.getElementById('search-cedula').value.toLowerCase();
+  const searchCedulaInput = document.getElementById('search-cedula');
+  if (cedulaFilter) {
+    searchCedulaInput.value = cedulaFilter;
+  }
+  const searchCedula = searchCedulaInput.value.toLowerCase();
   const searchNombre = document.getElementById('search-nombre').value.toLowerCase();
   const sortBy = document.getElementById('sort-by').value;
   const sortOrder = document.getElementById('sort-order').value;

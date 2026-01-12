@@ -173,8 +173,7 @@ async function handlePaymentSubmit(event, generatePdf = false) {
 }
 
 async function generateFullPDF() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+    const doc = new jspdf.jsPDF();
     
     const params = new URLSearchParams(window.location.search);
     const prestamoId = parseInt(params.get('id'), 10);
